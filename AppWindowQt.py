@@ -7,11 +7,13 @@ import sys
 class Ui_MainWindow(object):
 
     def __init__(self):
-        self.working_path = "processimage.jpg"
+        self.working_path = "processimage/inputresizedimage.jpg"
+        self.displayoutput = "processimage/postprocessresized.jpg"
         self.gui_functions = GuiFunctions()
         self.imgwidth = 401
         self.imgheight = 401
         self.accepted_extensions = set(["PNG", "png", "jpg", "jpeg"])
+        self.file_has_been_loaded = False
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -48,12 +50,13 @@ class Ui_MainWindow(object):
         self.button1.setFont(font)
         self.button1.setObjectName("button1")
         
-        self.button2 = QtWidgets.QPushButton(self.centralwidget)
-        self.button2.setGeometry(QtCore.QRect(400, 410, 401, 51))
+        self.srganx4 = QtWidgets.QPushButton(self.centralwidget)
+        self.srganx4.setGeometry(QtCore.QRect(400, 410, 401, 51))
         font = QtGui.QFont()
         font.setPointSize(12)
-        self.button2.setFont(font)
-        self.button2.setObjectName("button2")
+        self.srganx4.setFont(font)
+        self.srganx4.setObjectName("srganx4")
+        self.srganx4.clicked.connect(lambda: self.processImage("srganx4"))
         
         self.saveButton = QtWidgets.QPushButton(self.centralwidget)
         self.saveButton.setGeometry(QtCore.QRect(330, 500, 141, 51))
@@ -61,6 +64,7 @@ class Ui_MainWindow(object):
         font.setPointSize(12)
         self.saveButton.setFont(font)
         self.saveButton.setObjectName("saveButton")
+        self.saveButton.clicked.connect(lambda: self.saveFileDialogBox())
         
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
@@ -82,6 +86,7 @@ class Ui_MainWindow(object):
         
         self.actionSave = QtWidgets.QAction(MainWindow)
         self.actionSave.setObjectName("actionSave")
+        self.actionSave.triggered.connect(lambda: self.saveFileDialogBox())
         
         self.menuFile.addAction(self.actionNew)
         self.menuFile.addAction(self.actionSave)
@@ -97,7 +102,8 @@ class Ui_MainWindow(object):
         self.chosen_photo.setText(_translate("MainWindow", "Click Here To Add Image"))
         self.processed_photo.setText(_translate("MainWindow", "Your UpScaled Image"))
         self.button1.setText(_translate("MainWindow", "SRGAN x2"))
-        self.button2.setText(_translate("MainWindow", "SRGAN x4"))
+        self.srganx4.setText(_translate("MainWindow", "SRGAN x4"))
+        self.srganx4.setStatusTip(_translate("MainWindow", "This Will Take Some Time..."))
         self.saveButton.setText(_translate("MainWindow", "Save Image"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         
@@ -109,6 +115,16 @@ class Ui_MainWindow(object):
         self.actionSave.setStatusTip(_translate("MainWindow", "Save the upscaled image"))
         self.actionSave.setShortcut(_translate("MainWindow", "Ctrl+S"))
 
+    def processImage(self, model):
+        if not self.file_has_been_loaded :
+            self.showNoFilePopup()
+        else :
+            successRes = self.gui_functions.superresUpscaler(model)
+            if successRes :
+                self.processed_photo.setPixmap(QtGui.QPixmap("processimage/downscaled_finalprocessedimage_" + model + ".jpg"))
+            else :
+                self.showFatalPopup()
+
     def displayChosenImage(self):
         self.chosen_photo.setPixmap(QtGui.QPixmap(self.working_path))
     
@@ -118,14 +134,46 @@ class Ui_MainWindow(object):
         
         if extension in self.accepted_extensions :
             self.gui_functions.openFile(file_path, self.imgwidth, self.imgheight)
+            self.file_has_been_loaded = True
             self.displayChosenImage()
         else :
             self.showExtensionsMismatchPopup(extension)
+
+    def saveFileDialogBox(self):
+        if not self.file_has_been_loaded :
+            self.showNoFilePopup()
+        else :
+            file_path = QFileDialog.getSaveFileName()[0]
+            extension = file_path.split('.')[-1] ##Use this for checking filetype and throwing errors and stuff
+
+            if extension == file_path :
+                file_path = file_path + ".jpg"
+                self.gui_functions.saveFile(file_path)
+            else :
+                self.gui_functions.saveFile(file_path)
+
+    def showNoFilePopup(self):
+        popmsg = QMessageBox()
+        popmsg.setWindowTitle("Image Enhancer Alert")
+        popmsg.setText("Please open a file first :)")
+        popmsg.setIcon(QMessageBox.Critical)
+
+        x = popmsg.exec_()
 
     def showExtensionsMismatchPopup(self, extension):
         popmsg = QMessageBox()
         popmsg.setWindowTitle("Image Enhancer Alert")
         popmsg.setText("." + extension + " is currently not supported !")
+        popmsg.setIcon(QMessageBox.Critical)
+
+        popmsg.setDetailedText(str(self.accepted_extensions) + " are the supported extensions")
+
+        x = popmsg.exec_()
+
+    def showFatalPopup(self):
+        popmsg = QMessageBox()
+        popmsg.setWindowTitle("Image Enhancer Fatal Alert")
+        popmsg.setText("Image UpScaling with chosen Algorithm encountered a fatal error !")
         popmsg.setIcon(QMessageBox.Critical)
 
         x = popmsg.exec_()
