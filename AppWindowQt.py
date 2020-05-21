@@ -1,8 +1,18 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QLabel
 from AppGuiFunctions import GuiFunctions
 import sys
+
+
+class QLabel_alterada(QLabel):
+    clicked = QtCore.pyqtSignal()
+    def __init__(self, parent=None):
+        QLabel.__init__(self, parent)
+
+    def mousePressEvent(self, ev):
+        self.clicked.emit()
+
 
 class Ui_MainWindow(object):
 
@@ -22,7 +32,7 @@ class Ui_MainWindow(object):
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         
-        self.chosen_photo = QtWidgets.QLabel(self.centralwidget)
+        self.chosen_photo = QLabel_alterada(self.centralwidget)
         self.chosen_photo.setGeometry(QtCore.QRect(0, 0, 401, 401))        
         font = QtGui.QFont()
         font.setPointSize(11)        
@@ -31,6 +41,7 @@ class Ui_MainWindow(object):
         self.chosen_photo.setFrameShape(QtWidgets.QFrame.Box)
         self.chosen_photo.setAlignment(QtCore.Qt.AlignCenter)
         self.chosen_photo.setObjectName("chosen_photo")
+        self.chosen_photo.clicked.connect(lambda: self.openFileDialogBox())         
         
         self.processed_photo = QtWidgets.QLabel(self.centralwidget)
         self.processed_photo.setGeometry(QtCore.QRect(400, 0, 401, 401))
@@ -43,12 +54,13 @@ class Ui_MainWindow(object):
         self.processed_photo.setAlignment(QtCore.Qt.AlignCenter)
         self.processed_photo.setObjectName("processed_photo")
         
-        self.button1 = QtWidgets.QPushButton(self.centralwidget)
-        self.button1.setGeometry(QtCore.QRect(0, 410, 401, 51))
+        self.wdsrbx4 = QtWidgets.QPushButton(self.centralwidget)
+        self.wdsrbx4.setGeometry(QtCore.QRect(0, 410, 401, 51))
         font = QtGui.QFont()
         font.setPointSize(12)
-        self.button1.setFont(font)
-        self.button1.setObjectName("button1")
+        self.wdsrbx4.setFont(font)
+        self.wdsrbx4.setObjectName("wdsrbx4")
+        self.wdsrbx4.clicked.connect(lambda: self.processImage("wdsr-b-finetunedx4"))
         
         self.srganx4 = QtWidgets.QPushButton(self.centralwidget)
         self.srganx4.setGeometry(QtCore.QRect(400, 410, 401, 51))
@@ -101,7 +113,8 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate("MainWindow", "Image Enhancer"))
         self.chosen_photo.setText(_translate("MainWindow", "Click Here To Add Image"))
         self.processed_photo.setText(_translate("MainWindow", "Your UpScaled Image"))
-        self.button1.setText(_translate("MainWindow", "SRGAN x2"))
+        self.wdsrbx4.setText(_translate("MainWindow", "WDSR B x4"))
+        self.wdsrbx4.setStatusTip(_translate("MainWindow", "This Will Take Some Time..."))
         self.srganx4.setText(_translate("MainWindow", "SRGAN x4"))
         self.srganx4.setStatusTip(_translate("MainWindow", "This Will Take Some Time..."))
         self.saveButton.setText(_translate("MainWindow", "Save Image"))
@@ -136,6 +149,8 @@ class Ui_MainWindow(object):
             self.gui_functions.openFile(file_path, self.imgwidth, self.imgheight)
             self.file_has_been_loaded = True
             self.displayChosenImage()
+        elif extension == "" :
+            pass
         else :
             self.showExtensionsMismatchPopup(extension)
 
@@ -178,13 +193,9 @@ class Ui_MainWindow(object):
 
         x = popmsg.exec_()
 
-    def main(self):
+    def execute(self):
         app = QtWidgets.QApplication(sys.argv)
         MainWindow = QtWidgets.QMainWindow()
         self.setupUi(MainWindow)
         MainWindow.show()
         sys.exit(app.exec_())
-
-if __name__ == "__main__":
-    obj = Ui_MainWindow()
-    obj.main()
