@@ -6,6 +6,8 @@ An *Open-Source*, **PythonQt5 based Desktop App** for up-scaling images using **
 
 Well, let's talk about it in upcoming updates :wink:
 
+* As of now, we just have a new PopUp Window when you click the upscaled image. So you can now look/review the upscaled image closely before saving it !
+
 ## How To Run ? (I'll deploy this soon, but for now...)
 
 * Clone this repo :
