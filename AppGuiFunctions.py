@@ -13,6 +13,8 @@ class GuiFunctions(object):
         self.path_to_file = ""
         self.winwidth = 401
         self.winheight = 401
+        self.imgrealwidth = 401
+        self.imgrealheight = 401
 
     def openFile(self, file_path, winwidth, winheight):
         self.path_to_file = file_path
@@ -26,6 +28,8 @@ class GuiFunctions(object):
     def imageFitter(self, file_input_path, file_output_path, winwidth, winheight):
         rawimg = cv2.imread(file_input_path, 1)
 
+        self.imgrealwidth = rawimg.shape[1]
+        self.imgrealheight = rawimg.shape[0]
         ##Will change the logic below later, for now its been configured for square window shapes :P
 
         if rawimg.shape[1] >= rawimg.shape[0] :
