@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QFileDialog, QMessageBox, QLabel
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QLabel, QMainWindow
 from AppGuiFunctions import GuiFunctions
 import sys
 
@@ -13,6 +13,37 @@ class QLabel_alterada(QLabel):
     def mousePressEvent(self, ev):
         self.clicked.emit()
 
+class Window2(QMainWindow):
+
+    def __init__(self, width, height, file_path):
+        super().__init__()
+        self.width = width
+        self.height = height
+        self.file_path = file_path
+        self.setupUi()
+
+    def setupUi(self):
+        self.setObjectName("MainWindow2")
+        self.resize(self.width, self.height)
+        
+        self.postprocess_photo = QLabel(self)
+        self.postprocess_photo.setGeometry(QtCore.QRect(0, 0, self.width, self.height))        
+        font = QtGui.QFont()
+        font.setPointSize(11)        
+        self.postprocess_photo.setFont(font)
+        self.postprocess_photo.setAutoFillBackground(True)
+        self.postprocess_photo.setAlignment(QtCore.Qt.AlignCenter)
+        self.postprocess_photo.setObjectName("postprocess_photo")
+        self.postprocess_photo.setPixmap(QtGui.QPixmap(self.file_path))
+
+        self.retranslateUi()
+        QtCore.QMetaObject.connectSlotsByName(self)
+
+    def retranslateUi(self):
+        _translate = QtCore.QCoreApplication.translate
+        self.setWindowTitle(_translate("MainWindow2", "Processed Image"))
+
+
 
 class Ui_MainWindow(object):
 
@@ -24,6 +55,7 @@ class Ui_MainWindow(object):
         self.imgheight = 401
         self.accepted_extensions = set(["PNG", "png", "jpg", "jpeg"])
         self.file_has_been_loaded = False
+        self.photo_has_been_processed = False
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -43,7 +75,7 @@ class Ui_MainWindow(object):
         self.chosen_photo.setObjectName("chosen_photo")
         self.chosen_photo.clicked.connect(lambda: self.openFileDialogBox())         
         
-        self.processed_photo = QtWidgets.QLabel(self.centralwidget)
+        self.processed_photo = QLabel_alterada(self.centralwidget)
         self.processed_photo.setGeometry(QtCore.QRect(400, 0, 401, 401))
         font = QtGui.QFont()
         font.setPointSize(11)
@@ -53,6 +85,7 @@ class Ui_MainWindow(object):
         self.processed_photo.setFrameShadow(QtWidgets.QFrame.Plain)
         self.processed_photo.setAlignment(QtCore.Qt.AlignCenter)
         self.processed_photo.setObjectName("processed_photo")
+        self.processed_photo.clicked.connect(lambda: self.openExtraWindow()) 
         
         self.wdsrbx4 = QtWidgets.QPushButton(self.centralwidget)
         self.wdsrbx4.setGeometry(QtCore.QRect(0, 410, 401, 51))
@@ -111,8 +144,13 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Image Enhancer"))
+        
         self.chosen_photo.setText(_translate("MainWindow", "Click Here To Add Image"))
-        self.processed_photo.setText(_translate("MainWindow", "Your UpScaled Image"))
+        self.chosen_photo.setStatusTip(_translate("MainWindow", "Click Click Click Click..."))
+
+        self.processed_photo.setText(_translate("MainWindow", "Click Here to View Your UpScaled Image"))
+        self.processed_photo.setStatusTip(_translate("MainWindow", "Click Here to View Your UpScaled Image More Closely..."))
+
         self.wdsrbx4.setText(_translate("MainWindow", "WDSR B x4"))
         self.wdsrbx4.setStatusTip(_translate("MainWindow", "This Will Take Some Time..."))
         self.srganx4.setText(_translate("MainWindow", "SRGAN x4"))
@@ -135,12 +173,20 @@ class Ui_MainWindow(object):
             successRes = self.gui_functions.superresUpscaler(model)
             if successRes :
                 self.processed_photo.setPixmap(QtGui.QPixmap("processimage/downscaled_finalprocessedimage_" + model + ".jpg"))
+                self.photo_has_been_processed = True
             else :
                 self.showFatalPopup()
 
     def displayChosenImage(self):
         self.chosen_photo.setPixmap(QtGui.QPixmap(self.working_path))
     
+    def openExtraWindow(self):
+        if self.photo_has_been_processed :
+            self.dialog = Window2(self.gui_functions.imgrealwidth , self.gui_functions.imgrealheight, self.gui_functions.finaloutputpath)
+            self.dialog.show()
+        else :
+            self.showNoUpscalingDonePopup()
+
     def openFileDialogBox(self):
         file_path = QFileDialog.getOpenFileName()[0]
         extension = file_path.split('.')[-1] ##Use this for checking filetype and throwing errors and stuff
@@ -149,6 +195,9 @@ class Ui_MainWindow(object):
             self.gui_functions.openFile(file_path, self.imgwidth, self.imgheight)
             self.file_has_been_loaded = True
             self.displayChosenImage()
+
+            self.processed_photo.setText(QtCore.QCoreApplication.translate("MainWindow", "Click Here to View Your UpScaled Image"))
+            self.photo_has_been_processed = False
         elif extension == "" :
             pass
         else :
@@ -175,6 +224,14 @@ class Ui_MainWindow(object):
 
         x = popmsg.exec_()
 
+    def showNoUpscalingDonePopup(self):
+        popmsg = QMessageBox()
+        popmsg.setWindowTitle("Image Enhancer Alert")
+        popmsg.setText("Please choose an Image UpScaling Algorithm First !")
+        popmsg.setIcon(QMessageBox.Critical)
+
+        x = popmsg.exec_()
+
     def showExtensionsMismatchPopup(self, extension):
         popmsg = QMessageBox()
         popmsg.setWindowTitle("Image Enhancer Alert")
@@ -195,7 +252,7 @@ class Ui_MainWindow(object):
 
     def execute(self):
         app = QtWidgets.QApplication(sys.argv)
-        MainWindow = QtWidgets.QMainWindow()
-        self.setupUi(MainWindow)
-        MainWindow.show()
+        self.MainWindow = QtWidgets.QMainWindow()
+        self.setupUi(self.MainWindow)
+        self.MainWindow.show()
         sys.exit(app.exec_())
