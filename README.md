@@ -50,6 +50,12 @@ Well, let's talk about it in upcoming updates :wink:
 * Find and implement SOTA models for image upscaling.
 
 * Other minor tweaks. Can't really think of anything now :grin:
+
+## References 
+
+* [CAR](https://github.com/sunwj/CAR)
+
+* [WDSR](https://github.com/leviome/wdsr)
   
 ## Author
 
